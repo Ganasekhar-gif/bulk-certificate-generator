@@ -1,0 +1,34 @@
+{
+  "recipients": [
+    {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "course_name": "Python Programming Fundamentals",
+      "completion_date": "2024-01-15"
+    },
+    {
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "course_name": "Python Programming Fundamentals",
+      "completion_date": "2024-01-15"
+    },
+    {
+      "name": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "course_name": "Python Programming Fundamentals",
+      "completion_date": "2024-01-15"
+    },
+    {
+      "name": "Bob Williams",
+      "email": "bob.williams@example.com",
+      "course_name": "Python Programming Fundamentals",
+      "completion_date": "2024-01-15"
+    },
+    {
+      "name": "Carol Brown",
+      "email": "carol.brown@example.com",
+      "course_name": "Python Programming Fundamentals",
+      "completion_date": "2024-01-15"
+    }
+  ]
+}

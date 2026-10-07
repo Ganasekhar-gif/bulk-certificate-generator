@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: certuser
+      POSTGRES_PASSWORD: certpass
+      POSTGRES_DB: certificate_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

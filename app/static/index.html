@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bulk Certificate Generator</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --warn: #eab308;
+      --error: #ef4444;
+      --radius: 10px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    header h1 { margin: 0; font-size: 1.35rem; font-weight: 600; }
+    header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; }
+    main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 700px) { .steps { grid-template-columns: 1fr 1fr; } }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .step.active { border-color: var(--accent); color: var(--text); }
+    .step.done { border-color: var(--success); }
+    .step strong { display: block; color: var(--text); font-size: 0.85rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 { margin: 0 0 1rem; font-size: 1.05rem; }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+    input {
+      width: 100%;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      margin-bottom: 0.65rem;
+    }
+    .recipient-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 120px auto;
+      gap: 0.5rem;
+      align-items: end;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    @media (max-width: 800px) {
+      .recipient-row { grid-template-columns: 1fr; }
+    }
+    .recipient-row input { margin-bottom: 0; }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); }
+    .btn-danger { background: transparent; color: var(--error); border: 1px solid var(--border); padding: 0.45rem 0.6rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .status-panel { display: none; }
+    .status-panel.visible { display: block; }
+    .progress-wrap {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 0.75rem 0;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+    .stats { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.9rem; }
+    .stats span { color: var(--muted); }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-pending { background: #334155; color: var(--warn); }
+    .badge-processing { background: #1e3a5f; color: #93c5fd; }
+    .badge-completed { background: #14532d; color: #86efac; }
+    .badge-failed { background: #450a0a; color: #fca5a5; }
+    .badge-success { background: #14532d; color: #86efac; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; }
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .alert.error { display: block; background: #450a0a; border: 1px solid var(--error); color: #fecaca; }
+    .alert.info { display: block; background: #1e3a5f; border: 1px solid var(--accent); color: #bfdbfe; }
+    a.download { color: var(--accent); text-decoration: none; }
+    a.download:hover { text-decoration: underline; }
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.8rem; }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bulk Certificate Generator</h1>
+    <p>Demo UI for the assignment API — submit recipients, watch the job run, download PDFs.</p>
+  </header>
+
+  <main>
+    <div class="steps" id="steps">
+      <div class="step active" data-step="1"><strong>1. Recipients</strong>Add people & course info</div>
+      <div class="step" data-step="2"><strong>2. Submit</strong>Create generation job</div>
+      <div class="step" data-step="3"><strong>3. Processing</strong>Worker builds PDFs</div>
+      <div class="step" data-step="4"><strong>4. Results</strong>Download certificates</div>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <section class="card">
+      <h2>Recipients</h2>
+      <div id="recipients"></div>
+      <div class="toolbar">
+        <button type="button" class="btn-ghost" id="add-row">+ Add recipient</button>
+        <button type="button" class="btn-ghost" id="load-sample">Load sample data</button>
+        <button type="button" class="btn-primary" id="submit-job">Generate certificates</button>
+      </div>
+    </section>
+
+    <section class="card status-panel" id="status-panel">
+      <h2>Job progress <span id="job-badge" class="badge badge-pending">—</span></h2>
+      <p style="margin:0;color:var(--muted);font-size:0.9rem;">Job ID: <strong id="job-id">—</strong></p>
+      <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="stats">
+        <div><span>Total</span> <strong id="stat-total">0</strong></div>
+        <div><span>Successful</span> <strong id="stat-ok" style="color:var(--success)">0</strong></div>
+        <div><span>Failed</span> <strong id="stat-fail" style="color:var(--error)">0</strong></div>
+      </div>
+      <p id="job-message" style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem;"></p>
+    </section>
+
+    <section class="card status-panel" id="results-panel">
+      <h2>Certificates</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody id="cert-table"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    API docs: <a href="/docs" target="_blank">Swagger</a> · This page is optional for demos only.
+  </footer>
+
+  <script>
+    const API = "";
+
+    function setStep(n) {
+      document.querySelectorAll(".step").forEach((el) => {
+        const s = Number(el.dataset.step);
+        el.classList.remove("active", "done");
+        if (s < n) el.classList.add("done");
+        if (s === n) el.classList.add("active");
+      });
+    }
+
+    function showAlert(msg, type = "error") {
+      const el = document.getElementById("alert");
+      el.textContent = msg;
+      el.className = "alert " + type;
+    }
+
+    function clearAlert() {
+      document.getElementById("alert").className = "alert";
+    }
+
+    function recipientTemplate(data = {}) {
+      const row = document.createElement("div");
+      row.className = "recipient-row";
+      row.innerHTML = `
+        <div><label>Name</label><input type="text" class="name" value="${data.name || ""}" placeholder="Jane Smith" required /></div>
+        <div><label>Email</label><input type="email" class="email" value="${data.email || ""}" placeholder="jane@example.com" required /></div>
+        <div><label>Course / event</label><input type="text" class="course" value="${data.course_name || ""}" placeholder="Python 101" required /></div>
+        <div><label>Completion date</label><input type="text" class="date" value="${data.completion_date || ""}" placeholder="2024-06-01" required /></div>
+        <button type="button" class="btn-danger remove" title="Remove">×</button>
+      `;
+      row.querySelector(".remove").onclick = () => {
+        if (document.querySelectorAll(".recipient-row").length > 1) row.remove();
+      };
+      return row;
+    }
+
+    function collectRecipients() {
+      const rows = document.querySelectorAll(".recipient-row");
+      const recipients = [];
+      for (const row of rows) {
+        const name = row.querySelector(".name").value.trim();
+        const email = row.querySelector(".email").value.trim();
+        const course_name = row.querySelector(".course").value.trim();
+        const completion_date = row.querySelector(".date").value.trim();
+        if (!name || !email || !course_name || !completion_date) {
+          throw new Error("Fill in all fields for every recipient.");
+        }
+        recipients.push({ name, email, course_name, completion_date });
+      }
+      if (!recipients.length) throw new Error("Add at least one recipient.");
+      return recipients;
+    }
+
+    const BADGE_CLASS = {
+      pending: "badge-pending",
+      processing: "badge-processing",
+      completed: "badge-completed",
+      failed: "badge-failed",
+      success: "badge-success",
+    };
+
+    function statusBadgeHtml(status) {
+      const cls = BADGE_CLASS[status] || "badge-pending";
+      return `<span class="badge ${cls}">${status}</span>`;
+    }
+
+    function setJobBadge(status) {
+      const el = document.getElementById("job-badge");
+      el.textContent = status;
+      el.className = "badge " + (BADGE_CLASS[status] || "badge-pending");
+    }
+
+    let pollTimer = null;
+    let activeJobId = null;
+
+    function stopPolling() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    }
+
+    async function pollJob(jobId) {
+      if (jobId !== activeJobId) return;
+
+      const statusRes = await fetch(`${API}/jobs/${jobId}/status`);
+      if (!statusRes.ok) throw new Error("Could not load job status.");
+      const job = await statusRes.json();
+
+      if (jobId !== activeJobId) return;
+
+      document.getElementById("job-id").textContent = job.id;
+      setJobBadge(job.status);
+      document.getElementById("stat-total").textContent = job.total_recipients;
+      document.getElementById("stat-ok").textContent = job.successful_count;
+      document.getElementById("stat-fail").textContent = job.failed_count;
+      document.getElementById("job-message").textContent = job.error_message || "";
+
+      const done = job.successful_count + job.failed_count;
+      const pct = job.total_recipients
+        ? Math.min(100, Math.round((done / job.total_recipients) * 100))
+        : 0;
+      document.getElementById("progress-bar").style.width =
+        job.status === "completed" || job.status === "failed" ? "100%" : pct + "%";
+
+      if (job.status === "processing" || job.status === "pending") {
+        setStep(3);
+      } else if (job.status === "completed" || job.status === "failed") {
+        setStep(4);
+      }
+
+      const certRes = await fetch(`${API}/jobs/${jobId}/certificates`);
+      const certs = certRes.ok ? await certRes.json() : [];
+      const tbody = document.getElementById("cert-table");
+      tbody.innerHTML = certs
+        .map(
+          (c) => `
+        <tr>
+          <td>${escapeHtml(c.recipient_name)}</td>
+          <td>${escapeHtml(c.recipient_email)}</td>
+          <td>${statusBadgeHtml(c.status)}</td>
+          <td>${
+            c.status === "success"
+              ? `<a class="download" href="${API}/certificates/${c.id}/download" target="_blank">PDF</a>`
+              : c.error_message
+              ? `<span style="color:var(--muted);font-size:0.8rem">${escapeHtml(c.error_message)}</span>`
+              : "—"
+          }</td>
+        </tr>`
+        )
+        .join("");
+
+      document.getElementById("status-panel").classList.add("visible");
+      document.getElementById("results-panel").classList.add("visible");
+
+      if (job.status === "completed" || job.status === "failed") {
+        stopPolling();
+        setStep(4);
+        if (job.status === "failed" && job.successful_count === 0) {
+          showAlert("Job failed. Check that Redis and the Celery worker are running.", "error");
+        } else if (job.failed_count > 0) {
+          showAlert("Job finished with some failures. See the table below.", "info");
+        } else {
+          clearAlert();
+        }
+      }
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = s || "";
+      return d.innerHTML;
+    }
+
+    document.getElementById("add-row").onclick = () => {
+      document.getElementById("recipients").appendChild(recipientTemplate());
+    };
+
+    document.getElementById("load-sample").onclick = async () => {
+      const res = await fetch("/example_request.json");
+      const data = await res.json();
+      const container = document.getElementById("recipients");
+      container.innerHTML = "";
+      data.recipients.slice(0, 3).forEach((r) => container.appendChild(recipientTemplate(r)));
+    };
+
+    document.getElementById("submit-job").onclick = async () => {
+      clearAlert();
+      stopPolling();
+      activeJobId = null;
+      try {
+        const recipients = collectRecipients();
+        setStep(2);
+        const btn = document.getElementById("submit-job");
+        btn.disabled = true;
+
+        const res = await fetch(`${API}/jobs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipients }),
+        });
+
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = body.detail
+            ? typeof body.detail === "string"
+              ? body.detail
+              : JSON.stringify(body.detail)
+            : "Request failed.";
+          throw new Error(detail);
+        }
+
+        const jobId = body.id;
+        activeJobId = jobId;
+        setStep(3);
+        document.getElementById("status-panel").classList.add("visible");
+        document.getElementById("results-panel").classList.add("visible");
+        clearAlert();
+
+        await pollJob(jobId);
+        if (activeJobId === jobId) {
+          pollTimer = setInterval(() => {
+            pollJob(jobId).catch((err) => {
+              console.error(err);
+              showAlert(err.message || "Could not refresh job status.", "error");
+            });
+          }, 1500);
+        }
+      } catch (e) {
+        showAlert(e.message, "error");
+        setStep(1);
+      } finally {
+        document.getElementById("submit-job").disabled = false;
+      }
+    };
+
+    document.getElementById("recipients").appendChild(recipientTemplate());
+  </script>
+</body>
+</html>
