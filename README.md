@@ -134,7 +134,7 @@ bulk-certificate-generator/
 ### 1. Clone & Enter Directory
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Ganasekhar-gif/bulk-certificate-generator.git
 cd bulk-certificate-generator
 ```
 
@@ -371,6 +371,3 @@ pytest
 
 ---
 
-## License
-
-This project is submitted as part of the technical evaluation for the Bulk Certificate Generator assignment.
